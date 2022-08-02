@@ -5,20 +5,37 @@ import sys
 # COR DAS CLASSES
 COLORS = [(0, 255, 255), (255, 255, 0), (0, 255, 0), (255, 0, 0), (0, 0, 255)]
 
+tiny = True
+telacheia = True
+
 #CARREGAR AS CLASSES
 class_name = []
 with open(r"darknet/data/coco.names", "r") as f:
   class_name = [cname.split()[0] for cname in f.readlines()]
 
 #CAPTURA DO VIDEO
-webcam = cv2.VideoCapture(0)
+if telacheia:
+  winName = 'Janela de Teste para o SOPT'
+  cv2.namedWindow(winName, cv2.WINDOW_NORMAL)
+  cv2.setWindowProperty(winName, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+else:
+  winName = 'Janela de Teste para o SOPT'
+
+webcam = cv2.VideoCapture(r"C:\Users\vinis\Downloads\Pexels Videos 2099536.mp4")
+#webcam = cv2.VideoCapture(0)
 
 #CARREGANDO PESOS DA REDE NEURAL
-net = cv2.dnn.readNet(r"darknet/cfg/yolov4-tiny.weights", r"darknet/cfg/yolov4-tiny.cfg")
+if tiny:
+  net = cv2.dnn.readNet(r"darknet/cfg/yolov4-tiny.weights", r"darknet/cfg/yolov4-tiny.cfg")
+else:
+  net = cv2.dnn.readNet(r"darknet/cfg/yolov4.weights", r"darknet/cfg/yolov4.cfg")
 
 #SETANDO REDE NEURAL
 model = cv2.dnn.DetectionModel(net)
-model.setInputParams(size=(416,416), scale=1/255)
+if tiny:
+  model.setInputParams(size=(416, 416), scale=1/255)
+else:
+  model.setInputParams(size=(608, 608), scale=1/255)
 
 if webcam.isOpened():
   validacao, frame = webcam.read()
@@ -37,13 +54,13 @@ while validacao:
 
   #FIM DETECÇÃO
   fim = time.time()
+  #scores = [round(score, 2) for score in scores]
 
   for (classid, score, box) in zip(classes, scores, boxes):
     #GERANDO UMA COR
     color = COLORS[int(classid) % len(COLORS)]
-
     #PEGANDO NOME E SCORE DA ACURACIA PELO ID
-    label = f"{class_name[classid]} : {round(score, 2)}"
+    label = f"{class_name[classid]} : {round(score,1)}"
 
     #DESENHADO O BOX DE DETECÇÃO
     cv2.rectangle(frame, box, color, 2)
@@ -59,7 +76,7 @@ while validacao:
   cv2.putText(frame, fps_label, (0, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
 
   #MOSTRANDO A IMAGEM
-  cv2.imshow("Video", frame)
+  cv2.imshow(winName, frame)
   key = cv2.waitKey(5)
 
   if key == 27: # ESC
